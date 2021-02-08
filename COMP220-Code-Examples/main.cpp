@@ -5,6 +5,10 @@
 
 #include "Shader.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 int main(int argc, char ** argsv)
 {
 	//Initialises the SDL Library, passing in SDL_INIT_VIDEO to only initialise the video subsystems
@@ -19,7 +23,7 @@ int main(int argc, char ** argsv)
 
 	//Create a window, note we have to free the pointer returned using the DestroyWindow Function
 	//https://wiki.libsdl.org/SDL_CreateWindow
-	SDL_Window* window = SDL_CreateWindow("SDL2 Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_OPENGL);
+	SDL_Window* window = SDL_CreateWindow("SDL2 Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 720, 720, SDL_WINDOW_OPENGL);
 	//Checks to see if the window has been created, the pointer will have a value of some kind
 	if (window == nullptr)
 	{
@@ -53,11 +57,16 @@ int main(int argc, char ** argsv)
 
 	// An array of 3 vectors which represents 3 vertices
 	static const GLfloat vertices[] = {
-	   -1.0f, -1.0f, 0.0f,
-	   1.0f, -1.0f, 0.0f,
-	   0.0f,  1.0f, 0.0f,
+	   -0.75f, -0.5f, 0.0f,
+	   0.75f, -0.5f, 0.0f,
+	   0.75f,  0.5f, 0.0f,
+	   -0.75f, 0.5, 0.0f
 	};
 
+	static const GLuint gl_vertex_indeces[] = {
+		0, 1, 2,
+		2, 3, 0
+	};
 
 	// This will identify our vertex buffer
 	GLuint vertexBuffer;
@@ -71,6 +80,12 @@ int main(int argc, char ** argsv)
 	// Create and compile our GLSL program from the shaders
 	GLuint programID = LoadShaders("BasicVert.glsl", 
 		"BasicFrag.glsl");
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+	model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+
+	unsigned int transformLoc = glGetUniformLocation(programID, "transform");
 
 	//Event loop, we will loop until running is set to false, usually if escape has been pressed or window is closed
 	bool running = true;
@@ -103,9 +118,11 @@ int main(int argc, char ** argsv)
 		}
 
 		glClearColor(1.0f, 0.0f, 0.0f, 1.0f); 
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glUseProgram(programID);
+
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
@@ -117,6 +134,23 @@ int main(int argc, char ** argsv)
 			0,                  // stride
 			(void*)0            // array buffer offset
 		);
+
+		GLuint elementbuffer;
+		glGenBuffers(1, &elementbuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(gl_vertex_indeces), gl_vertex_indeces, GL_STATIC_DRAW);
+
+		// Index buffer
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+
+		// Draw the triangles !
+		glDrawElements(
+			GL_TRIANGLES,      // mode
+			sizeof(gl_vertex_indeces),    // count
+			GL_UNSIGNED_INT,   // type
+			(void*)0           // element array buffer offset
+		);
+
 		// Draw the triangle !
 		glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
 		glDisableVertexAttribArray(0);
