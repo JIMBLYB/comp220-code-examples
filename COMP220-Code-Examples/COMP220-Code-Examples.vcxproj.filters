@@ -26,9 +26,15 @@
     <ClInclude Include="Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="BasicVert.glsl" />
     <None Include="BasicFrag.glsl" />
+    <None Include="cube.nff">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
